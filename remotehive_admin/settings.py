@@ -31,6 +31,10 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = ["*"]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://remotehive-django-production.up.railway.app",
+]
+
 
 # Application definition
 
