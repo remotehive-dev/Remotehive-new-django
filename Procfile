@@ -1,1 +1,1 @@
-web: python manage.py collectstatic --noinput && gunicorn remotehive_admin.wsgi:application --bind 0.0.0.0:$PORT
+web: python manage.py collectstatic --noinput && gunicorn remotehive_admin.wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --workers 4 --threads 4
