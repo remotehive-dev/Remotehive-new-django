@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://remotehive-django-production.up.railway.app",
+    "https://fastapi-production-2b1a.up.railway.app",
     "https://admin.remotehive.in",
     "https://employer.remotehive.in",
     "https://remotehive.in",
@@ -71,7 +72,12 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Security Settings (SSL/HTTPS)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "False").lower() == "true"
+SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "False").lower() == "true"
+CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", "False").lower() == "true"
+
 
 JAZZMIN_SETTINGS = {
     "site_title": "RemoteHive Super Admin",

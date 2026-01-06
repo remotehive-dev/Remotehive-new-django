@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
+import os
 
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -54,7 +55,8 @@ def api_docs_view(request):
     # Assuming FastAPI is running on port 8000 locally
     # In production, this URL should be updated or proxied
     # Note: FastAPI serves openapi.json at /api/v1/openapi.json based on app/main.py config
-    openapi_url = "http://localhost:8000/api/v1/openapi.json"
+    fastapi_base_url = os.environ.get("FASTAPI_BASE_URL", "http://localhost:8000").rstrip("/")
+    openapi_url = f"{fastapi_base_url}/api/v1/openapi.json"
     
     context = {
         "openapi_url": openapi_url,
@@ -68,7 +70,8 @@ def proxy_openapi(request):
     import requests
     from django.http import JsonResponse, HttpResponse
     try:
-        response = requests.get("http://localhost:8000/api/v1/openapi.json")
+        fastapi_base_url = os.environ.get("FASTAPI_BASE_URL", "http://localhost:8000").rstrip("/")
+        response = requests.get(f"{fastapi_base_url}/api/v1/openapi.json")
         return JsonResponse(response.json(), safe=False)
     except Exception as e:
         return HttpResponse(f"Error connecting to FastAPI: {e}", status=502)
@@ -165,8 +168,11 @@ def home_page_config_api(request):
     config = HomePageConfiguration.objects.first()
     
     # Fetch roles, regions, and footer links
+    from autoscraper.models import CompanyCategory
+    
     roles = []
     regions = []
+    quick_filters = []
     footer_links = {
         'platform': [],
         'support': [],
@@ -174,6 +180,18 @@ def home_page_config_api(request):
         'social': []
     }
     
+    # Fetch Quick Filters (Company Categories)
+    # We use top 12 ordered categories
+    cats = CompanyCategory.objects.filter(is_active=True).order_by('order')[:12]
+    for cat in cats:
+        quick_filters.append({
+            "name": cat.name,
+            "icon": cat.icon or "Briefcase", # Default icon
+            "href": f"/jobs?category={cat.slug}",
+            # Generate a consistent color based on ID or just default
+            "color": "bg-indigo-50 text-indigo-600" 
+        })
+
     if config:
         for r in config.roles.filter(is_active=True).order_by('order'):
             roles.append({
@@ -275,7 +293,8 @@ def home_page_config_api(request):
             "links": footer_links
         },
         "roles": roles,
-        "regions": regions
+        "regions": regions,
+        "quick_filters": quick_filters
     }
     
     response = JsonResponse(data)
